@@ -1,100 +1,71 @@
+#include"function.h"
+#include "potato.h"
 #include <iostream>
 #include <cstring>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <string.h>
+#include <vector>
+#include <tuple>
+#include <arpa/inet.h>
 
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-    //check arguments
+    // check arguments
     if (argc != 4)
     {
-        cerr << "ringmaster <port_num> <num_players> <num_hops>" << endl;
+        cerr << "Syntax: ringmaster <port_num> <num_players> <num_hops>" << endl;
     }
     const char *port_num = argv[1];
-    const char *num_players = argv[2];
-    const char *num_hops = argv[3];
+    int num_players = atoi(argv[2]);
+    int num_hops = atoi(argv[3]);
 
+    cout << "Potato Ringmaster" << endl;
+    cout << "Players = " << num_players << endl;
+    cout << "Hops = " << num_hops << endl;
+
+    //build server socket
+    int socket_fd=build_server(port_num);
+
+    //fd,port,host
+    vector<tuple<int,int,string>> player(num_players);
+    // finish create socketfd
+    for (int i = 0; i < num_players; i++)
+    {
+        int player_port;
+        string player_host;
+
+        int client_connection_fd=server_accept(socket_fd,&player_host);
+
+        send(client_connection_fd,&i,sizeof(i),0);
+        send(client_connection_fd,&num_players,sizeof(num_players),0);
+
+        recv(client_connection_fd, &player_port, sizeof(player_port), 0); 
+        
+        player[i]=make_tuple(client_connection_fd,player_port,player_host);
+        cout<<"Player "<<i<<" is ready to play"<<endl;
+    }
+    //sent right neighbor info and let players connect together!
+    for(int i=0;i<num_players;i++){
+        int neighbors=(i+1)%num_players;
+        int neighbors_port=get<1>(player[neighbors]);
+        char neighbor_ip[100];
+        memset(neighbor_ip,0,sizeof(neighbor_ip));
+        strcpy(neighbor_ip,get<2>(player[neighbors]).c_str());
+        send(get<0>(player[i]),&neighbors_port,sizeof(neighbors_port),0);
+        send(get<0>(player[i]),&neighbor_ip,sizeof(neighbor_ip),0);
+    }
+
+    //begin playing
+    // Potato potato(num_hops);
     
-    int status;
-    int socket_fd;
-    struct addrinfo host_info;
-    struct addrinfo *host_info_list;
-    const char *hostname = NULL;
-    const char *port = "4444";
+    int first=random()%num_players;
+    cout<<"Ready to start the game, sending potato to player "<<first<<endl;
+    cout<<"Trace of potato:"<<endl;
 
-    memset(&host_info, 0, sizeof(host_info)); // initialize, write 0 to &hostinfo
-
-    host_info.ai_family = AF_UNSPEC;
-    host_info.ai_socktype = SOCK_STREAM;
-    host_info.ai_flags = AI_PASSIVE;
-
-    status = getaddrinfo(hostname, port, &host_info, &host_info_list);
-    // get a list of IP addresses and port numbers for host hostname and service port
-    if (status != 0)
-    {
-        cerr << "Error: cannot get address info for host" << endl;
-        cerr << "  (" << hostname << "," << port << ")" << endl;
-        return -1;
-    } // if
-
-    socket_fd = socket(host_info_list->ai_family,
-                       host_info_list->ai_socktype,
-                       host_info_list->ai_protocol);
-    // creates an endpoint for communication and returns a descriptor
-    // return value is a descriptor referencing the socket.
-
-    if (socket_fd == -1)
-    {
-        cerr << "Error: cannot create socket" << endl;
-        cerr << "  (" << hostname << "," << port << ")" << endl;
-        return -1;
-    } // if
-
-    int yes = 1;
-    status = setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-    // allow address reuse
-    status = bind(socket_fd, host_info_list->ai_addr, host_info_list->ai_addrlen);
-    if (status == -1)
-    {
-        cerr << "Error: cannot bind socket" << endl;
-        cerr << "  (" << hostname << "," << port << ")" << endl;
-        return -1;
-    } // if
-
-    status = listen(socket_fd, 100);
-    // accept incoming connections, define a queue limit for incoming connections
-    if (status == -1)
-    {
-        cerr << "Error: cannot listen on socket" << endl;
-        cerr << "  (" << hostname << "," << port << ")" << endl;
-        return -1;
-    } // if
-
-    cout << "Waiting for connection on port " << port << endl;
-    struct sockaddr_storage socket_addr;
-    socklen_t socket_addr_len = sizeof(socket_addr);
-    int client_connection_fd;
-    client_connection_fd = accept(socket_fd, (struct sockaddr *)&socket_addr, &socket_addr_len);
-    // extracts first connection request on queue ,creates new socket , llocates a new file descriptor for the socket
-    // select a socket for the purposes of doing an accept() by selecting it for read
-    // returns a non-negative integer that is a descriptor for the accepted socket
-
-    if (client_connection_fd == -1)
-    {
-        cerr << "Error: cannot accept connection on socket" << endl;
-        return -1;
-    } // if
-
-    char buffer[512];
-    recv(client_connection_fd, buffer, 9, 0); // receive messages from a connected socket
-    buffer[9] = 0;
-
-    cout << "Server received: " << buffer << endl;
-
-    freeaddrinfo(host_info_list);
     close(socket_fd);
 
     return 0;

@@ -4,6 +4,9 @@
 ./server &
 # 获取服务器进程的 PID
 SERVER_PID=$!
+CUR_PID=$$
+echo "last pid:$SERVER_PID"
+echo "current pid:$CUR_PID"
 
 # 等待一秒钟，让服务器有足够的时间启动
 sleep 1

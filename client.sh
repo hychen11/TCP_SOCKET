@@ -1,5 +1,6 @@
-#!/bin/bash/
-MACHINE=$1
+#!/bin/bash
+#PORT $2 is like argv[2]!
+MACHINE=${1:-localhost}
 PORT=$2
 NUM_PLAYERS=$3
 sleep 1 

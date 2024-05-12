@@ -3,68 +3,55 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
-
+#include "function.h"
+#include "potato.h"
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-    int status;
-    int socket_fd;
-    struct addrinfo host_info;
-    struct addrinfo *host_info_list;
-    const char *hostname = argv[1];
-    const char *port = "4444";
-
-    if (argc < 2)
+    if (argc != 3)
     {
-        cout << "Syntax: client <hostname>\n"
-             << endl;
+        cout << "Syntax: player <machine_name> <port_num>"<< endl;
         return 1;
     }
+    const char *hostname = argv[1];
+    const char *port = argv[2];
 
-    memset(&host_info, 0, sizeof(host_info));
-    host_info.ai_family = AF_UNSPEC;
-    host_info.ai_socktype = SOCK_STREAM;
+    //socket fd is to connect with master!!
+    int socket_fd=build_client(hostname,port);
 
-    status = getaddrinfo(hostname, port, &host_info, &host_info_list);
-    // get a list of IP addresses and port numbers for host hostname and service port
-    if (status != 0)
-    {
-        cerr << "Error: cannot get address info for host" << endl;
-        cerr << "  (" << hostname << "," << port << ")" << endl;
-        return -1;
-    } // if
+    int player_id;
+    int num_players;
+    recv(socket_fd,&player_id,sizeof(player_id),0);
+    recv(socket_fd,&num_players,sizeof(num_players),0);
+   
+    //player_fd is to connect with right neighbor!!
+    int player_fd=build_server("");
+    int player_port=get_port_num(player_fd);
+    send(socket_fd,&player_port,sizeof(player_port),0);
+    cout<<"Connected as player "<<player_id<<" out of "<<num_players<<" total players"<<endl;
 
-    socket_fd = socket(host_info_list->ai_family,
-                       host_info_list->ai_socktype,
-                       host_info_list->ai_protocol);
-    // creates an endpoint for communication and returns a descriptor
-    // return value is a descriptor referencing the socket.
+    //receive master's neighbors infomation
+    int tmp_port;
+    int neighbors_ip[100];
+    //block receving! MSG_WAITALL
+    recv(socket_fd,&tmp_port,sizeof(tmp_port),MSG_WAITALL);
+    recv(socket_fd,&neighbors_ip,sizeof(neighbors_ip),MSG_WAITALL);
+    cout << "Neighbor's ip is " << neighbors_ip << ", neighbor's port is " << tmp_port<< endl;
+    
+    char neighbors_port[9];
+    sprintf(neighbors_port, "%d", tmp_port);
+    int right_neighor_fd=build_client(neighbors_ip,neighbors_port);
+    
+    //player will only receive left neighbors!
+    string left_neighor_ip;
+    int left_neighor_fd=server_accept(socket_fd,&left_neighor_ip);
 
-    if (socket_fd == -1)
-    {
-        cerr << "Error: cannot create socket" << endl;
-        cerr << "  (" << hostname << "," << port << ")" << endl;
-        return -1;
-    } // if
-
-    cout << "Connecting to " << hostname << " on port " << port << "..." << endl;
-
-    status = connect(socket_fd, host_info_list->ai_addr, host_info_list->ai_addrlen);
-    // stream sockets may successfully connect() only once; Y
-    // datagram sockets may use connect() multiple times to change their association.
-    if (status == -1)
-    {
-        cerr << "Error: cannot connect to socket" << endl;
-        cerr << "  (" << hostname << "," << port << ")" << endl;
-        return -1;
-    } // if
-
-    const char *message = "hi there!";
-    send(socket_fd, message, strlen(message), 0);
-
-    freeaddrinfo(host_info_list);
+    //play potato!
+    // Potato potato;
     close(socket_fd);
+    close(right_neighor_fd);
+    close(left_neighor_fd);
 
     return 0;
 }

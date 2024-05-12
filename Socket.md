@@ -334,3 +334,72 @@ int getpeername(int sockfd, struct sockaddr *addr, int *addrlen);
 
 # Client & Server
 
+# Blocking
+
+```c++
+sockfd = socket(PF_INET, SOCK_STREAM, 0);
+fcntl(sockfd, F_SETFL, O_NONBLOCK);
+```
+
+将 socket 设置为 non-blocking（非阻塞），你就能 ＂poll（轮询）＂socket 以取得数据。如果你试着读取 non-blocking socket，而 socket 没有数据时，函数就不会发生 block，而是返回 -1，并将 errno 设置为 EWOULDBLOCK。 然而，一般来说，这样 polling 是不好的想法。如果你让程序一直忙着查 socket 上是否有数据，则会浪费 CPU 的时间，这样是不合适的。比较漂亮的解法是利用下一节的 **select()** 来检查 socket 是否有数据需要读取。
+
+# select()
+
+**select()** 授予你同时监视多个 sockets 的权力，它会告诉你哪些 sockets 已经有数据可以读取丶哪些 sockets 已经可以写入，如果你真的想知道，还会告诉你哪些 sockets 触发了例外。
+
+```c++
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+int select(int numfds, fd_set *readfds, fd_set *writefds,
+           fd_set *exceptfds, struct timeval *timeout);
+
+struct timeval {
+  int tv_sec; // 秒（second）
+  int tv_usec; // 微秒（microseconds）
+};
+```
+
+如果你将 struct timeval 的栏位设置为 0，select() 会在轮询过 sets 中的每个 file descriptors 之後，就马上 timeout。如果你将 timeout 参数设置为 NULL，它就永远不会 timeout，并且陷入等待，直到至少一个 file descriptor 已经就绪（ready）
+
+```
+FD_SET(int fd, fd_set *set);     将 fd 新增到 set。
+FD_CLR(int fd, fd_set *set);     从 set 移除 fd。
+FD_ISSET(int fd, fd_set *set);   若 fd 在 set 中，返回 true。
+FD_ZERO(fd_set *set);            将 set 整个清为零。
+```
+
+```c++
+/*
+** select.c -- a select() demo
+*/
+#include <stdio.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#define STDIN 0 // standard input 的 file descriptor
+int main(void)
+{
+  struct timeval tv;
+  fd_set readfds;
+
+  tv.tv_sec = 2;
+  tv.tv_usec = 500000;
+
+  FD_ZERO(&readfds);
+  FD_SET(STDIN, &readfds);
+
+  // 不用管 writefds 与 exceptfds：
+  select(STDIN+1, &readfds, NULL, NULL, &tv);
+
+  if (FD_ISSET(STDIN, &readfds))
+    printf("A key was pressed!\n");
+  else
+    printf("Timed out.\n");
+  return 0;
+}
+```
+
+这里就是终端输入就是fd=0,这里2.5s不按就timeout
+
