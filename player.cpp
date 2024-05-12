@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 
     //receive master's neighbors infomation
     int tmp_port;
-    int neighbors_ip[100];
+    char neighbors_ip[100];
     //block receving! MSG_WAITALL
     recv(socket_fd,&tmp_port,sizeof(tmp_port),MSG_WAITALL);
     recv(socket_fd,&neighbors_ip,sizeof(neighbors_ip),MSG_WAITALL);
@@ -48,7 +48,13 @@ int main(int argc, char *argv[])
     int left_neighor_fd=server_accept(socket_fd,&left_neighor_ip);
 
     //play potato!
-    // Potato potato;
+    Potato potato;
+    int num=0;
+    srand((unsigned int)time(NULL)+player_id);
+    int random = rand() % N;
+
+    cout<<"Sending potato to "<<num<<endl;
+
     close(socket_fd);
     close(right_neighor_fd);
     close(left_neighor_fd);
