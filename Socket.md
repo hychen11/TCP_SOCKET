@@ -402,4 +402,3 @@ int main(void)
 ```
 
 这里就是终端输入就是fd=0,这里2.5s不按就timeout
-
