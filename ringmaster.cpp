@@ -33,6 +33,9 @@ int main(int argc, char *argv[])
     // fd,port,host
     vector<tuple<int, int, string>> player(num_players);
     // finish create socketfd
+
+    int fdmax;
+
     for (int i = 0; i < num_players; i++)
     {
         int player_port;
@@ -44,7 +47,10 @@ int main(int argc, char *argv[])
         send(client_connection_fd, &num_players, sizeof(num_players), 0);
 
         recv(client_connection_fd, &player_port, sizeof(player_port), 0);
-
+        if(i==0){
+            fdmax=client_connection_fd;
+        }
+        fdmax=max(fdmax,client_connection_fd);
         player[i] = make_tuple(client_connection_fd, player_port, player_host);
         cout << "Player " << i << " is ready to play" << endl;
     }
@@ -73,12 +79,6 @@ int main(int argc, char *argv[])
 
     // FD_ZERO(&master); // 清除 master 与 temp sets
     FD_ZERO(&read_fds);
-    auto fdmax_tuple = max_element(player.begin(), player.end(),
-                                   [](const std::tuple<int, int, std::string> &a, const std::tuple<int, int, std::string> &b)
-                                   {
-                                       return std::get<0>(a) < std::get<0>(b);
-                                   });
-    int fdmax = get<0>(*fdmax_tuple);
     for (int i = 0; i < num_players; i++)
     {
         FD_SET(get<0>(player[i]), &read_fds);
