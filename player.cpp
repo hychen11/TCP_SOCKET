@@ -50,10 +50,60 @@ int main(int argc, char *argv[])
     //play potato!
     Potato potato;
     int num=0;
-    srand((unsigned int)time(NULL)+player_id);
-    int random = rand() % N;
+    int fdmax; // 最大的 file descriptor 数目
 
-    cout<<"Sending potato to "<<num<<endl;
+    srand((unsigned int)time(NULL)+player_id);
+
+    fd_set read_fds;
+    fd_set master;
+    FD_ZERO(&read_fds);
+    FD_ZERO(&master);
+
+    FD_SET(right_neighor_fd, &master);
+    FD_SET(left_neighor_fd, &master);
+    FD_SET(socket_fd, &master);
+    fdmax=max(max(right_neighor_fd,left_neighor_fd),socket_fd);
+
+
+    while(1){
+        read_fds=master;
+        if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
+            perror("select");
+            exit(4);
+        }
+        int len;
+        if(FD_ISSET(right_neighor_fd, &read_fds)){
+            len=recv(right_neighor_fd, &potato, sizeof(potato), MSG_WAITALL);
+        }else if(FD_ISSET(left_neighor_fd, &read_fds)){
+            len=recv(left_neighor_fd, &potato, sizeof(potato), MSG_WAITALL);
+        }else if(FD_ISSET(socket_fd, &read_fds)){
+            len=recv(socket_fd, &potato, sizeof(potato), MSG_WAITALL);
+        }
+
+        int random = rand() % 2;
+        //0 left,1 right
+        if(potato.hop==0||len==0){
+            break;
+        }else if(potato.hop==1){
+            potato.path.push_back(player_id);
+            potato.hop--;
+            send(socket_fd,&potato,sizeof potato,0);
+            cout<<"I'm it"<<endl;
+        }
+        else{
+            potato.path.push_back(num);
+            potato.hop--;
+            if(random){
+                send(right_neighor_fd,&potato,sizeof(potato),0);
+                num=(player_id+1)%num_players;
+
+            }else{
+                send(left_neighor_fd,&potato,sizeof(potato),0);
+                num=(player_id+num_players-1)%num_players;
+            }
+            cout<<"Sending potato to "<<num<<endl;
+        }
+    }
 
     close(socket_fd);
     close(right_neighor_fd);

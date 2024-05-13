@@ -68,24 +68,55 @@ int main(int argc, char *argv[])
     send(get<0>(player[random]), &potato, sizeof(potato), 0);
     cout << "Ready to start the game, sending potato to player " << random << endl;
 
-    fd_set master;   // master file descriptor 表
-    fd_set read_fds; // 给 select() 用的暂时 file descriptor 表
-    int fdmax;       // 最大的 file descriptor 数目
+    // fd_set master;   // master file descriptor 表
+    fd_set read_fds; // 给 select() 用的暂时 file descriptor 表( the set monitor to!)
 
-    FD_ZERO(&master); // 清除 master 与 temp sets
+    // FD_ZERO(&master); // 清除 master 与 temp sets
     FD_ZERO(&read_fds);
     auto fdmax_tuple = max_element(player.begin(), player.end(),
-                             [](const std::tuple<int, int, std::string> &a, const std::tuple<int, int, std::string> &b)
-                             {
-                                 return std::get<0>(a) < std::get<0>(b);
-                             });
-    int fdmax=get<0>(*fdmax_tuple);
-    FD_SET(get<0>(player[random]), &master);
-
-
-
+                                   [](const std::tuple<int, int, std::string> &a, const std::tuple<int, int, std::string> &b)
+                                   {
+                                       return std::get<0>(a) < std::get<0>(b);
+                                   });
+    int fdmax = get<0>(*fdmax_tuple);
+    for (int i = 0; i < num_players; i++)
+    {
+        FD_SET(get<0>(player[i]), &read_fds);
+    }
+    //monitor all fd!
+    if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1)
+    {
+        perror("select");
+        exit(4);
+    }
+    //get potato means it reach 0!
+    for (int i = 0; i <num_players; i++)
+    {
+        if (FD_ISSET(get<0>(player[i]), &read_fds))
+        { // 我们找到一个！！
+            recv(get<0>(player[i]), &potato, sizeof potato, MSG_WAITALL);
+            break;
+        }
+    }
+    //notify all players to end game!
+    for (int i = 0; i <num_players; i++)
+    {
+        send(get<0>(player[i]), &potato, sizeof potato, 0);
+    }
     cout << "Trace of potato:" << endl;
+    for(int i=0;i<potato.path.size();i++){
+        cout<<potato.path[i];
+        if(i != potato.path.size()-1){
+            cout<<", ";
+        }else{
+            cout<<endl;
+        }
+    }
 
+    for (int i = 0; i <num_players; i++)
+    {
+        close(get<0>(player[i]));
+    }
     close(socket_fd);
 
     return 0;
