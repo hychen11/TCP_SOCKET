@@ -10,8 +10,9 @@ class Potato
 {
 public:
     int hop{};
-    std::vector<int> path{};
+    int index{};
+    int path[512];
     Potato(){}
-    Potato(int num_hops) : hop(num_hops){}
+    Potato(int num_hops) : hop(num_hops){memset(path,0,sizeof(path));}
 
 };
