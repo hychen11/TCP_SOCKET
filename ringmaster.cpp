@@ -104,9 +104,9 @@ int main(int argc, char *argv[])
         send(get<0>(player[i]), &potato, sizeof potato, 0);
     }
     cout << "Trace of potato:" << endl;
-    for(int i=0;i<potato.path.size();i++){
+    for(int i=0;i<potato.count;i++){
         cout<<potato.path[i];
-        if(i != potato.path.size()-1){
+        if(i != potato.count-1){
             cout<<", ";
         }else{
             cout<<endl;

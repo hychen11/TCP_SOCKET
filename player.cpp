@@ -55,6 +55,8 @@ int main(int argc, char *argv[])
 
     srand((unsigned int)time(NULL) + player_id);
 
+    cout<<"start to select"<<endl;
+    
     vector<int> connected_fd{right_neighor_fd, left_neighor_fd, socket_fd};
 
     fd_set read_fds;
@@ -90,15 +92,20 @@ int main(int argc, char *argv[])
         }
         else if (potato.hop == 1)
         {
-            potato.path.push_back(player_id);
+            // potato.path.push_back(player_id);
             potato.hop--;
+            potato.count++;
+            potato.path[potato.count] = player_id;
+
             send(socket_fd, &potato, sizeof potato, 0);
             cout << "I'm it" << endl;
         }
         else
         {
-            potato.path.push_back(player_id);
+                        // potato.path.push_back(player_id);
             potato.hop--;
+            potato.count++;
+            potato.path[potato.count] = player_id;
             int random = rand() % 2;
 
             if (random)
