@@ -12,6 +12,6 @@ public:
     int hop{};
     std::vector<int> path;
     Potato(){}
-    Potato(int num_hops) : hop(num_hops),path(vector<int>(512)) {}
+    Potato(int num_hops) : hop(num_hops),path(std::vector<int>(512)) {}
 
 };
