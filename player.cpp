@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     // block receving! MSG_WAITALL
     recv(socket_fd, &tmp_port, sizeof(tmp_port), MSG_WAITALL);
     recv(socket_fd, &neighbors_ip, sizeof(neighbors_ip), MSG_WAITALL);
-    cout << "Neighbor's ip is " << neighbors_ip << ", neighbor's port is " << tmp_port << endl;
+    // cout << "Neighbor's ip is " << neighbors_ip << ", neighbor's port is " << tmp_port << endl;
 
     char neighbors_port[9];
     sprintf(neighbors_port, "%d", tmp_port);
@@ -55,8 +55,6 @@ int main(int argc, char *argv[])
 
     srand((unsigned int)time(NULL) + player_id);
 
-    cout<<"start to select"<<endl;
-    
     vector<int> connected_fd{right_neighor_fd, left_neighor_fd, socket_fd};
 
     fd_set read_fds;
