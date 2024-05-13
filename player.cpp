@@ -94,18 +94,16 @@ int main(int argc, char *argv[])
         {
             // potato.path.push_back(player_id);
             potato.hop--;
-            potato.count++;
-            potato.path[potato.count] = player_id;
+            potato.path.push_back(player_id);
 
             send(socket_fd, &potato, sizeof potato, 0);
             cout << "I'm it" << endl;
         }
         else
         {
-                        // potato.path.push_back(player_id);
+            // potato.path.push_back(player_id);
             potato.hop--;
-            potato.count++;
-            potato.path[potato.count] = player_id;
+            potato.path.push_back(player_id);
             int random = rand() % 2;
 
             if (random)
