@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     
     //player will only receive left neighbors!
     string left_neighor_ip;
-    int left_neighor_fd=server_accept(socket_fd,&left_neighor_ip);
+    int left_neighor_fd=server_accept(player_fd,&left_neighor_ip);
 
     //play potato!
     Potato potato;
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     FD_SET(socket_fd, &master);
     fdmax=max(max(right_neighor_fd,left_neighor_fd),socket_fd);
 
-
+    cout<<"start select"<<endl;
     while(1){
         read_fds=master;
         if (select(fdmax+1, &read_fds, NULL, NULL, NULL) == -1) {
@@ -80,7 +80,6 @@ int main(int argc, char *argv[])
             len=recv(socket_fd, &potato, sizeof(potato), MSG_WAITALL);
         }
 
-        int random = rand() % 2;
         //0 left,1 right
         if(potato.hop==0||len==0){
             break;
@@ -91,12 +90,13 @@ int main(int argc, char *argv[])
             cout<<"I'm it"<<endl;
         }
         else{
-            potato.path.push_back(num);
+            potato.path.push_back(player_id);
             potato.hop--;
+            int random = rand() % 2;
+            
             if(random){
                 send(right_neighor_fd,&potato,sizeof(potato),0);
                 num=(player_id+1)%num_players;
-
             }else{
                 send(left_neighor_fd,&potato,sizeof(potato),0);
                 num=(player_id+num_players-1)%num_players;

@@ -138,13 +138,13 @@ int server_accept(int socket_fd, string * ip){
 
 //int getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 int get_port_num(int socket_fd){
-    struct sockaddr_in *addr;
-    socklen_t addrlen=sizeof(*addr);
+    struct sockaddr_in addr;
+    socklen_t addrlen=sizeof(addr);
     int status;
-    status=getsockname(socket_fd,(struct sockaddr *)addr,&addrlen);
+    status=getsockname(socket_fd,(struct sockaddr *)&addr,&addrlen);
     if(status==-1){
         cerr<<"Error: cannot getsockname" << endl;
         return -1;
     }
-    return ntohs(addr->sin_port);
+    return ntohs(addr.sin_port);
 }
