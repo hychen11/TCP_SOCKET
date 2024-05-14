@@ -148,3 +148,16 @@ int get_port_num(int socket_fd){
     }
     return ntohs(addr.sin_port);
 }
+
+void send_all(int socket_fd, const void *buffer, size_t length) {
+    const char *buf = static_cast<const char *>(buffer);
+    size_t total_sent = 0;  // Total bytes sent
+    while (total_sent < length) {
+        ssize_t bytes_sent = send(socket_fd, buf + total_sent, length - total_sent, 0);
+        if (bytes_sent == -1) {
+            perror("send");
+            exit(EXIT_FAILURE);
+        }
+        total_sent += bytes_sent;
+    }
+}
