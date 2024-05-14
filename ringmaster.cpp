@@ -43,8 +43,8 @@ int main(int argc, char *argv[])
 
         int client_connection_fd = server_accept(socket_fd, &player_host);
 
-        send(client_connection_fd, &i, sizeof(i), 0);
-        send(client_connection_fd, &num_players, sizeof(num_players), 0);
+        send_all(client_connection_fd, &i, sizeof(i));
+        send_all(client_connection_fd, &num_players, sizeof(num_players));
 
         recv(client_connection_fd, &player_port, sizeof(player_port), 0);
         if(i==0){
@@ -62,16 +62,17 @@ int main(int argc, char *argv[])
         char neighbor_ip[100];
         memset(neighbor_ip, 0, sizeof(neighbor_ip));
         strcpy(neighbor_ip, get<2>(player[neighbors]).c_str());
-        send(get<0>(player[i]), &neighbors_port, sizeof(neighbors_port), 0);
-        send(get<0>(player[i]), &neighbor_ip, sizeof(neighbor_ip), 0);
+        send_all(get<0>(player[i]), &neighbors_port, sizeof(neighbors_port));
+        send_all(get<0>(player[i]), &neighbor_ip, sizeof(neighbor_ip));
     }
 
     // begin playing
-    Potato potato(num_hops);
+    Potato *potato=new Potato(num_hops);
+    // Potato potato(num_hops);
 
     srand((unsigned int)time(NULL) + num_players);
     int random = rand() % num_players;
-    send(get<0>(player[random]), &potato, sizeof(potato), 0);
+    send_all(get<0>(player[random]), potato, sizeof(*potato));
     cout << "Ready to start the game, sending potato to player " << random << endl;
 
     // fd_set master;   // master file descriptor 表
@@ -104,20 +105,22 @@ int main(int argc, char *argv[])
         send(get<0>(player[i]), &potato, sizeof potato, 0);
     }
     cout << "Trace of potato:" << endl;
-    for(int i=0;i<potato.index;i++){
-        cout<<potato.path[i];
-        if(i != potato.index-1){
+    for(int i=0;i<potato->index;i++){
+        cout<<potato->path[i];
+        if(i != potato->index-1){
             cout<<", ";
         }else{
             cout<<endl;
         }
     }
 
+
     for (int i = 0; i <num_players; i++)
     {
         close(get<0>(player[i]));
     }
     close(socket_fd);
+    delete potato;
 
     return 0;
 }
