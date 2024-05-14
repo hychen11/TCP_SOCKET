@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     int left_neighor_fd = server_accept(player_fd, &left_neighor_ip);
 
     // play potato!
-    Potato *potato;
+    Potato potato;
     int num = 0;
     int fdmax; // 最大的 file descriptor 数目
 
@@ -78,41 +78,41 @@ int main(int argc, char *argv[])
         int len;
         for(int i=0;i<3;i++){
             if(FD_ISSET(connected_fd[i], &read_fds)){
-                len = recv(connected_fd[i], potato, sizeof(*potato), MSG_WAITALL);
+                len = recv(connected_fd[i], &potato, sizeof(potato), MSG_WAITALL);
                 break;
             }
         }
 
         // 0 left,1 right
-        if (potato->hop == 0 || len == 0)
+        if (potato.hop == 0 || len == 0)
         {
             break;
         }
-        else if (potato->hop == 1)
+        else if (potato.hop == 1)
         {
-            potato->hop--;
-            potato->index++;
-            potato->path[potato->index]=player_id;
+            potato.hop--;
+            potato.index++;
+            potato.path[potato.index]=player_id;
 
-            send_all(socket_fd, potato, sizeof(*potato));
+            send_all(socket_fd, &potato, sizeof(potato));
             cout << "I'm it" << endl;
         }
         else
         {
             // potato.path.push_back(player_id);
-            potato->hop--;
-            potato->index++;
-            potato->path[potato->index]=player_id;
+            potato.hop--;
+            potato.index++;
+            potato.path[potato.index]=player_id;
             int random = rand() % 2;
 
             if (random)
             {
-                send_all(right_neighor_fd, potato, sizeof(*potato));
+                send_all(right_neighor_fd, &potato, sizeof(potato));
                 num = (player_id + 1) % num_players;
             }
             else
             {
-                send_all(left_neighor_fd, potato, sizeof(*potato));
+                send_all(left_neighor_fd, &potato, sizeof(potato));
                 num = (player_id + num_players - 1) % num_players;
             }
             cout << "Sending potato to " << num << endl;
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
     close(socket_fd);
     close(right_neighor_fd);
     close(left_neighor_fd);
-    delete potato;
+    // delete potato;
 
     return 0;
 }

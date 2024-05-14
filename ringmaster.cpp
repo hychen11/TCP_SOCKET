@@ -67,12 +67,12 @@ int main(int argc, char *argv[])
     }
 
     // begin playing
-    Potato *potato=new Potato(num_hops);
-    // Potato potato(num_hops);
+    // Potato *potato=new Potato(num_hops);
+    Potato potato(num_hops);
 
     srand((unsigned int)time(NULL) + num_players);
     int random = rand() % num_players;
-    send_all(get<0>(player[random]), potato, sizeof(*potato));
+    send_all(get<0>(player[random]), &potato, sizeof(potato));
     cout << "Ready to start the game, sending potato to player " << random << endl;
 
     // fd_set master;   // master file descriptor 表
@@ -95,19 +95,19 @@ int main(int argc, char *argv[])
     {
         if (FD_ISSET(get<0>(player[i]), &read_fds))
         { // 我们找到一个！！
-            recv(get<0>(player[i]), potato, sizeof(*potato), MSG_WAITALL);
+            recv(get<0>(player[i]), &potato, sizeof(potato), MSG_WAITALL);
             break;
         }
     }
     //notify all players to end game!
     for (int i = 0; i <num_players; i++)
     {
-        send(get<0>(player[i]), potato, sizeof(*potato), 0);
+        send(get<0>(player[i]), &potato, sizeof(potato), 0);
     }
     cout << "Trace of potato:" << endl;
-    for(int i=0;i<potato->index;i++){
-        cout<<potato->path[i];
-        if(i != potato->index-1){
+    for(int i=0;i<potato.index;i++){
+        cout<<potato.path[i];
+        if(i != potato.index-1){
             cout<<", ";
         }else{
             cout<<endl;
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
         close(get<0>(player[i]));
     }
     close(socket_fd);
-    delete potato;
+    // delete potato;
 
     return 0;
 }
