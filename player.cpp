@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
             potato->index++;
             potato->path[potato->index]=player_id;
 
-            send_all(socket_fd, &potato, sizeof(potato));
+            send_all(socket_fd, potato, sizeof(*potato));
             cout << "I'm it" << endl;
         }
         else
@@ -107,12 +107,12 @@ int main(int argc, char *argv[])
 
             if (random)
             {
-                send_all(right_neighor_fd, &potato, sizeof(potato));
+                send_all(right_neighor_fd, potato, sizeof(*potato));
                 num = (player_id + 1) % num_players;
             }
             else
             {
-                send_all(left_neighor_fd, &potato, sizeof(potato));
+                send_all(left_neighor_fd, potato, sizeof(*potato));
                 num = (player_id + num_players - 1) % num_players;
             }
             cout << "Sending potato to " << num << endl;
@@ -123,5 +123,6 @@ int main(int argc, char *argv[])
     close(right_neighor_fd);
     close(left_neighor_fd);
     delete potato;
+
     return 0;
 }

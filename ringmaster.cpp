@@ -95,14 +95,14 @@ int main(int argc, char *argv[])
     {
         if (FD_ISSET(get<0>(player[i]), &read_fds))
         { // 我们找到一个！！
-            recv(get<0>(player[i]), &potato, sizeof potato, MSG_WAITALL);
+            recv(get<0>(player[i]), potato, sizeof(*potato), MSG_WAITALL);
             break;
         }
     }
     //notify all players to end game!
     for (int i = 0; i <num_players; i++)
     {
-        send(get<0>(player[i]), &potato, sizeof potato, 0);
+        send(get<0>(player[i]), potato, sizeof(*potato), 0);
     }
     cout << "Trace of potato:" << endl;
     for(int i=0;i<potato->index;i++){
