@@ -7,6 +7,7 @@ sleep 1
 
 for ((i=1; i<=$NUM_PLAYERS; i++))
 do
-    ./player $MACHINE $PORT &
+    # ./player $MACHINE $PORT &
+    valgrind -v --leak-check=full --track-origins=yes ./player $MACHINE $PORT &
 done
 wait
